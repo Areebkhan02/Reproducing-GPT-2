@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import torch 
 import torch.nn as nn   
 from torch.nn import functional as F 
-
+import tiktoken 
 
 class CausalSelfAttention(nn.Module):
 
@@ -119,8 +119,11 @@ class GPT(nn.Module):
             x = block(x)
         # forward the final layernorm and the classifier
         x = self.transformer.ln_f(x)
+        loss = None
         logits = self.lm_head(x) # (B, T, vocab_size)
-        return logits 
+        if targets is not None:
+            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
+        return logits, loss
         
 
     @classmethod
@@ -185,7 +188,7 @@ class DataLoaderLite:
         self.tokens = torch.tensor(tokens)
         print(f"loaded {len(self.tokens)} tokens")
         print(f"1 epoch = {len(self.tokens) // (B*T)} batches")
-
+        self.current_position = 0
   
 
     def next_batch(self):
@@ -194,7 +197,7 @@ class DataLoaderLite:
         x = (buf[:-1]).view(B, T) # inputs
         y = (buf[1:]).view(B, T) # targets
         # advance the position in the tensor
-        self.current_position += B * T * self.num_processes
+        self.current_position += B * T
         # if loading the next batch would be out of bounds, advance to next shard
         if self.current_position + (B * T + 1) > len(self.tokens):
             self.current_position = 0
