@@ -174,7 +174,7 @@ class GPT(nn.Module):
     
 
 class DataLoaderLite:
-    def __init__(self, B, T, process_rank, num_processes, split):
+    def __init__(self, B, T):
         self.B = B
         self.T = T
 
@@ -213,13 +213,21 @@ torch.manual_seed(1337)
 if torch.cuda.is_available():
     torch.cuda.manual_seed(1337)
 
+train_loader = DataLoaderLite(B=4, T=32)
 
-
-
-
-model = GPT.from_pretrained('gpt2')
-model.eval()
+#logits 
+model = GPT(GPTConfig())
 model.to('cuda')
+
+optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
+for i in range(50):
+    x, y = train_loader.next_batch()
+    x, y = x.to('cuda'), y.to('cuda')
+    optimizer.zero_grad()
+    logits, loss = model(x, y)
+    loss.backward()
+    optimizer.step()
+    print(f"step {i} loss: {loss.item()}")
 
 
 
