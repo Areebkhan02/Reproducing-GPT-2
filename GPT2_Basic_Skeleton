@@ -239,6 +239,7 @@ for i in range(50):
         #import code; code.interact(local=locals())
 
     loss.backward()
+    norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
     optimizer.step()
     torch.cuda.synchronize()
     t1 = time.time()
