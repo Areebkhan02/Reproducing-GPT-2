@@ -227,7 +227,7 @@ class DataLoaderLite:
         # self.current_position = 0
 
         #for fineweb dataset
-        data_root = "edu_fineweb300M"
+        data_root = "edu_fineweb3B"
         shards = os.listdir(data_root)
         shards = [s for s in shards if split in s]
         shards = sorted(shards)
