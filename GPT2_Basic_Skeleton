@@ -322,8 +322,16 @@ def get_lr(it):
 #optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, betas=(0.9, 0.95), eps=1e-8)
 optimizer = model.configure_optimizers(weight_decay=0.1, learning_rate=6e-4, device_type='cuda')
 
+# create the log directory we will write checkpoints to and log to
+log_dir = "log"
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, f"log.txt")
+with open(log_file, "w") as f: # open for writing to clear the file
+    pass
+
 for step in range(max_steps):
     t0 = time.time()
+    last_step = (step == max_steps - 1)
 
     if step % 10 == 0:
         model.eval()
@@ -339,6 +347,23 @@ for step in range(max_steps):
                 loss = loss / val_loss_steps
                 val_loss_accum += loss.detach()
             print(f"validation loss: {val_loss_accum.item():.4f}")
+            with open(log_file, "a") as f:
+                f.write(f"{step} val {val_loss_accum.item():.4f}\n")
+            if step > 0 and (step % 100 == 0 or last_step):
+                # save model checkpoints with optimizer state and step
+                checkpoint_path = os.path.join(log_dir, f"model_{step:05d}.pt")
+                checkpoint = {
+                    'model': model.state_dict(),
+                    'optimizer': optimizer.state_dict(),  # Save optimizer state
+                    'config': model.config,
+                    'step': step,
+                    'val_loss': val_loss_accum.item(),
+                    'rng_state': torch.get_rng_state(),  # Save RNG state
+                    'cuda_rng_state': torch.cuda.get_rng_state() if torch.cuda.is_available() else None
+                }
+                torch.save(checkpoint, checkpoint_path)
+
+
 
     model.train()
     optimizer.zero_grad()
@@ -366,6 +391,8 @@ for step in range(max_steps):
     tokens_processed = train_loader.B * train_loader.T * grad_accum_steps
     tokens_per_second = (tokens_processed) / (t1-t0)
     print(f"step {step} loss: {loss_accum.item()},lr {lr:.6f}, norm: {norm.item():.6f}, time: {dt:.2f}ms, tokens per second: {tokens_per_second:.2f}")
+    with open(log_file, "a") as f:
+        f.write(f"{step} train {loss_accum.item():.6f}\n")
 
 
 
