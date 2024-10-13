@@ -8,7 +8,7 @@ print("Resuming training")
 
 #Define paths and parameters
 
-checkpoint_path = "log/model_00100.pt"  # Update with your checkpoint path
+checkpoint_path = "log/model_00760.pt"  # Update with your checkpoint path
 log_dir = "log"
 os.makedirs(log_dir, exist_ok=True)
 log_file = os.path.join(log_dir, "log.txt")
