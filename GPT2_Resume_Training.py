@@ -8,7 +8,7 @@ print("Resuming training")
 
 #Define paths and parameters
 
-checkpoint_path = "log/model_00760.pt"  # Update with your checkpoint path
+checkpoint_path = "log/model_01660.pt"  # Update with your checkpoint path
 log_dir = "log"
 os.makedirs(log_dir, exist_ok=True)
 log_file = os.path.join(log_dir, "log.txt")
@@ -120,7 +120,7 @@ for step in range(start_step + 1, max_steps):
                 val_loss_accum += loss.detach()
             print(f"validation loss: {val_loss_accum.item():.4f}")
             update_log_file(log_file, step, "val", val_loss_accum.item())
-            if step > 0 and (step % 10 == 0 or last_step):
+            if step > 0 and (step % 100 == 0 or last_step):
                 # Save model checkpoints with optimizer state and step
                 checkpoint_path = os.path.join(log_dir, f"model_{step:05d}.pt")
                 checkpoint = {
